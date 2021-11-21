@@ -12,13 +12,18 @@ phases:
     on-failure: ABORT
     commands:
       - echo 'begin pre build step'
+      - aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 477827136140.dkr.ecr.us-west-2.amazonaws.com
 
   build:
     on-failure: ABORT
     commands:
-      - ls
-      - cd ./common-api
       - echo 'begin  build step'
+      - ls
+      - cd ./common-ap
+      - docker build -t core-api .
+      - docker tag core-api:latest 477827136140.dkr.ecr.us-west-2.amazonaws.com/core-api:latest
+      - docker push 477827136140.dkr.ecr.us-west-2.amazonaws.com/core-api:latest
+      
   post_build:
     on-failure: ABORT
     commands:
