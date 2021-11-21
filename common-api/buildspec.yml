@@ -1,12 +1,6 @@
 version: 0.2
 
 phases:
-  download_source:
-    on-failure: ABORT
-    commands:
-      - pwd
-      - ls
-      - echo 'Source download completed'
   install:
     on-failure: ABORT
     commands:
