@@ -19,11 +19,11 @@ phases:
     commands:
       - echo 'begin  build step'
       - ls
-      - cd ./common-ap
+      - cd ./common-api
       - docker build -t core-api .
       - docker tag core-api:latest 477827136140.dkr.ecr.us-west-2.amazonaws.com/core-api:latest
       - docker push 477827136140.dkr.ecr.us-west-2.amazonaws.com/core-api:latest
-      
+
   post_build:
     on-failure: ABORT
     commands:
