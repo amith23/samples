@@ -1,0 +1,109 @@
+AWSTemplateFormatVersion: 2010-09-09
+Metadata:
+  'AWS::CloudFormation::Designer':
+    9315d4c2-97f7-4e41-b484-510c1c770bb4:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 460
+        'y': 130
+      z: 0
+      embeds: []
+      dependson:
+        - 728841fd-9b5f-497f-93c0-02b27ac5fa00
+    7e586310-d60a-40c7-ae97-0958d0f28d10:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 690
+        'y': 130
+      z: 0
+      embeds: []
+    728841fd-9b5f-497f-93c0-02b27ac5fa00:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 690
+        'y': 30
+      z: 0
+      embeds: []
+Resources:
+  CoreAPI:
+    Type: 'AWS::CodeBuild::Project'
+    Properties:
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Artifacts:
+        Type: NO_ARTIFACTS
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: 'aws/codebuild/ubuntu-base:14.04'
+        EnvironmentVariables:
+          - Name: varName1
+            Value: varValue1
+          - Name: varName2
+            Value: varValue2
+            Type: PLAINTEXT
+          - Name: varName3
+            Value: /CodeBuild/testParameter
+            Type: PARAMETER_STORE
+      Source:
+        Type: GITHUB
+        Location: 'https://github.com/amith23/samples.git'
+      TimeoutInMinutes: 10
+      Cache:
+        Type: S3
+        Location: mybucket/prefix
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 9315d4c2-97f7-4e41-b484-510c1c770bb4
+    DependsOn:
+      - CodeBuildRole
+      - CodeBuildArtifcats
+  CodeBuildRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action:
+              - 'sts:AssumeRole'
+            Effect: Allow
+            Principal:
+              Service:
+                - codebuild.amazonaws.com
+        Version: 2012-10-17
+      Path: /
+      Policies:
+        - PolicyName: CodeBuildAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Action:
+                  - 'logs:CreateLogGroup'
+                  - 'logs:PutLogEvents'
+                  - 'logs:CreateLogStream'
+                  - 'ecr:*'
+                  - 's3:GetBucketAcl'
+                  - 's3:PutObject'
+                  - 's3:GetObject'
+                  - 's3:GetBucketLocation'
+                  - 's3:GetObjectVersion'
+                  - 'codebuild:CreateReportGroup'
+                  - 'codebuild:CreateReport'
+                  - 'codebuild:UpdateReport'
+                  - 'codebuild:BatchPutCodeCoverages'
+                  - 'codebuild:BatchPutTestCases'
+                Effect: Allow
+                Resource: '*'
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 7e586310-d60a-40c7-ae97-0958d0f28d10
+  CodeBuildArtifcats:
+    Type: 'AWS::S3::Bucket'
+    Properties: {}
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 728841fd-9b5f-497f-93c0-02b27ac5fa00
