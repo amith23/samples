@@ -12,6 +12,7 @@ Metadata:
       embeds: []
       dependson:
         - 728841fd-9b5f-497f-93c0-02b27ac5fa00
+        - ca6a0dd2-e0b1-4ea8-9a7f-32812617f20f
     7e586310-d60a-40c7-ae97-0958d0f28d10:
       size:
         width: 60
@@ -30,6 +31,15 @@ Metadata:
         'y': 30
       z: 0
       embeds: []
+    ca6a0dd2-e0b1-4ea8-9a7f-32812617f20f:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 320
+        'y': 100
+      z: 0
+      embeds: []
 Resources:
   CoreAPI:
     Type: 'AWS::CodeBuild::Project'
@@ -40,7 +50,8 @@ Resources:
       Environment:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_SMALL
-        Image: 'aws/codebuild/ubuntu-base:14.04'
+        Image: 'aws/codebuild/standard:1.0'
+        PrivilegedMode: true
         EnvironmentVariables:
           - Name: varName1
             Value: varValue1
@@ -53,6 +64,7 @@ Resources:
       Source:
         Type: GITHUB
         Location: 'https://github.com/amith23/samples.git'
+        BuildSpec: common-api/buildspec.yml
       TimeoutInMinutes: 10
       Cache:
         Type: S3
@@ -61,8 +73,8 @@ Resources:
       'AWS::CloudFormation::Designer':
         id: 9315d4c2-97f7-4e41-b484-510c1c770bb4
     DependsOn:
-      - CodeBuildRole
       - CodeBuildArtifcats
+      - SSMParameters
   CodeBuildRole:
     Type: 'AWS::IAM::Role'
     Properties:
@@ -96,6 +108,7 @@ Resources:
                   - 'codebuild:UpdateReport'
                   - 'codebuild:BatchPutCodeCoverages'
                   - 'codebuild:BatchPutTestCases'
+                  - 'ssm:GetParameters'
                 Effect: Allow
                 Resource: '*'
     Metadata:
@@ -107,3 +120,12 @@ Resources:
     Metadata:
       'AWS::CloudFormation::Designer':
         id: 728841fd-9b5f-497f-93c0-02b27ac5fa00
+  SSMParameters:
+    Type: 'AWS::SSM::Parameter'
+    Properties:
+      Name: /CodeBuild/testParameter
+      Type: String
+      Value: date
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: ca6a0dd2-e0b1-4ea8-9a7f-32812617f20f
