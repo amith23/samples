@@ -1,219 +1,113 @@
----
 AWSTemplateFormatVersion: 2010-09-09
-
-
+Metadata:
+  'AWS::CloudFormation::Designer':
+    3049c138-7d60-4d83-8651-ae3b7fd4796e:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 210
+        'y': 90
+      z: 1
+      embeds: []
+      dependson:
+        - a4e5ab1b-892b-40b2-ab9d-e85937963910
+    a4e5ab1b-892b-40b2-ab9d-e85937963910:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 390
+        'y': 90
+      z: 1
+      embeds: []
+    d4a38169-615a-4217-8aac-f5545bcb6446:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 222
+        'y': 262
+      z: 0
+      embeds: []
+      
 Parameters:
-  GitHubRepo:
+  Region:
     Type: String
-
-  GitHubBranch:
+    Default: eu-west-2
+  Stage:
     Type: String
-
-  GitHubToken:
+    Default: dev
+  GithubUserName:
     Type: String
-    NoEcho: true
-
-  GitHubUser:
+    Default: <USERNAME>
+  GithubRepo:
     Type: String
-
-  Cluster:
+    Default: Fargate-ECSCluster-Cloudformation
+  GithubBranch:
     Type: String
-
-  Service:
+    Default: <BRANCH>
+  GithubOAuthToken:
     Type: String
-
-
-Resources:
-  Repository:
-    Type: AWS::ECR::Repository
-    DeletionPolicy: Retain
+    Default: <GITHUB ACCESS TOKEN>
+  ContainerPort:
+    Type: Number
+    Default: 8080
     
-  CodePipelineServiceRole:
-    Type: AWS::IAM::Role
+Resources:
+  CodePipeLine:
+    Type: 'AWS::CodePipeline::Pipeline'
     Properties:
-      Path: /
-      AssumeRolePolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: codepipeline.amazonaws.com
-            Action: sts:AssumeRole
-      Policies:
-        - PolicyName: root
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Resource:
-                  - !Sub arn:aws:s3:::${ArtifactBucket}/*
-                Effect: Allow
-                Action:
-                  - s3:PutObject
-                  - s3:GetObject
-                  - s3:GetObjectVersion
-                  - s3:GetBucketVersioning
-              - Resource: "*"
-                Effect: Allow
-                Action:
-                  - ecs:DescribeServices
-                  - ecs:DescribeTaskDefinition
-                  - ecs:DescribeTasks
-                  - ecs:ListTasks
-                  - ecs:RegisterTaskDefinition
-                  - ecs:UpdateService
-                  - codebuild:StartBuild
-                  - codebuild:BatchGetBuilds
-                  - iam:PassRole
-
-  ArtifactBucket:
-    Type: AWS::S3::Bucket
-    DeletionPolicy: Retain
-
-  CoreAPI:
-    Type: 'AWS::CodeBuild::Project'
-    Properties:
-      ServiceRole: !GetAtt CodeBuildRole.Arn
-      Artifacts:
-        Type: NO_ARTIFACTS
-      Environment:
-        Type: LINUX_CONTAINER
-        ComputeType: BUILD_GENERAL1_SMALL
-        Image: 'aws/codebuild/standard:1.0'
-        PrivilegedMode: true
-        EnvironmentVariables:
-          - Name: varName1
-            Value: varValue1
-          - Name: varName2
-            Value: varValue2
-            Type: PLAINTEXT
-          - Name: varName3
-            Value: /CodeBuild/testParameter
-            Type: PARAMETER_STORE
-      Source:
-        Type: GITHUB
-        Location: 'https://github.com/amith23/samples.git'
-        BuildSpec: common-api/buildspec.yml
-      TimeoutInMinutes: 10
-      Cache:
+      ArtifactStore:
+        Location: !Join ['-', [!Ref Stage, !Ref 'AWS::AccountId', 's3bucket']]
         Type: S3
-        Location: mybucket/prefix
+      Name: CoreAPICodePipeline
+      RestartExecutionOnUpdate: false
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: Source
+              ActionTypeId:
+                Category: Source
+                Owner: ThirdParty
+                Provider: GitHub
+                Version: 1
+              Configuration:
+                Repo: repo
+                Branch: branch
+                Owner: owner
+                OAuthToken: auth
+              Region: !Ref Region
+              RunOrder: 1
+              OutputArtifacts:
+                - Name: source-output-artifacts
+      RoleArn:
+        'Fn::GetAtt':
+          - CodePipeLineExecutionRole
+          - Arn
     Metadata:
       'AWS::CloudFormation::Designer':
-        id: 9315d4c2-97f7-4e41-b484-510c1c770bb4
+        id: 3049c138-7d60-4d83-8651-ae3b7fd4796e
     DependsOn:
-      - CodeBuildArtifcats
-      - SSMParameters
-  CodeBuildRole:
+      - CodePipelineArtifactsS3Bucket
+  CodePipelineArtifactsS3Bucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: !Join ['-', [!Ref Stage, !Ref 'AWS::AccountId', 's3bucket']]
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: a4e5ab1b-892b-40b2-ab9d-e85937963910
+  CodePipeLineExecutionRole:
     Type: 'AWS::IAM::Role'
     Properties:
       AssumeRolePolicyDocument:
         Statement:
-          - Action:
-              - 'sts:AssumeRole'
-            Effect: Allow
+          - Effect: Allow
             Principal:
-              Service:
-                - codebuild.amazonaws.com
-        Version: 2012-10-17
-      Path: /
-      Policies:
-        - PolicyName: CodeBuildAccess
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Action:
-                  - 'logs:CreateLogGroup'
-                  - 'logs:PutLogEvents'
-                  - 'logs:CreateLogStream'
-                  - 'ecr:*'
-                  - 's3:GetBucketAcl'
-                  - 's3:PutObject'
-                  - 's3:GetObject'
-                  - 's3:GetBucketLocation'
-                  - 's3:GetObjectVersion'
-                  - 'codebuild:CreateReportGroup'
-                  - 'codebuild:CreateReport'
-                  - 'codebuild:UpdateReport'
-                  - 'codebuild:BatchPutCodeCoverages'
-                  - 'codebuild:BatchPutTestCases'
-                  - 'ssm:GetParameters'
-                Effect: Allow
-                Resource: '*'
+              Service: codepipeline.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AdministratorAccess'
     Metadata:
       'AWS::CloudFormation::Designer':
-        id: 7e586310-d60a-40c7-ae97-0958d0f28d10
-  CodeBuildArtifcats:
-    Type: 'AWS::S3::Bucket'
-    Properties: {}
-    Metadata:
-      'AWS::CloudFormation::Designer':
-        id: 728841fd-9b5f-497f-93c0-02b27ac5fa00
-  SSMParameters:
-    Type: 'AWS::SSM::Parameter'
-    Properties:
-      Name: /CodeBuild/testParameter
-      Type: String
-      Value: date
-    Metadata:
-      'AWS::CloudFormation::Designer':
-        id: ca6a0dd2-e0b1-4ea8-9a7f-32812617f20f
-        
-  Pipeline:
-    Type: AWS::CodePipeline::Pipeline
-    Properties:
-      RoleArn: !GetAtt CodePipelineServiceRole.Arn
-      ArtifactStore:
-        Type: S3
-        Location: !Ref ArtifactBucket
-      Stages:
-        - Name: Source
-          Actions:
-            - Name: App
-              ActionTypeId:
-                Category: Source
-                Owner: ThirdParty
-                Version: 1
-                Provider: GitHub
-              Configuration:
-                Owner: !Ref GitHubUser
-                Repo: !Ref GitHubRepo
-                Branch: !Ref GitHubBranch
-                OAuthToken: !Ref GitHubToken
-              OutputArtifacts:
-                - Name: App
-              RunOrder: 1
-        - Name: Build
-          Actions:
-            - Name: Build
-              ActionTypeId:
-                Category: Build
-                Owner: AWS
-                Version: 1
-                Provider: CodeBuild
-              Configuration:
-                ProjectName: !Ref CoreAPI
-              InputArtifacts:
-                - Name: App
-              OutputArtifacts:
-                - Name: BuildOutput
-              RunOrder: 1
-        - Name: Deploy
-          Actions:
-            - Name: Deploy
-              ActionTypeId:
-                Category: Deploy
-                Owner: AWS
-                Version: 1
-                Provider: ECS
-              Configuration:
-                ClusterName: !Ref Cluster
-                ServiceName: !Ref Service
-                FileName: images.json
-              InputArtifacts:
-                - Name: BuildOutput
-              RunOrder: 1
-
-
-Outputs:
-  PipelineUrl:
-    Value: !Sub https://console.aws.amazon.com/codepipeline/home?region=${AWS::Region}#/view/${Pipeline}
+        id: d4a38169-615a-4217-8aac-f5545bcb6446
