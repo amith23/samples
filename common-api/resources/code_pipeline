@@ -30,7 +30,24 @@ Metadata:
         'y': 262
       z: 0
       embeds: []
-      
+    f262e89d-d4f0-429a-ba20-4e78d7a37915:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: -12.67258380248202
+        'y': 120.21631940884755
+      z: 0
+      embeds: []
+    13c381d4-e16f-4299-b2a6-6411e2f58b32:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: -137.4978065212527
+        'y': 258.0601236381649
+      z: 0
+      embeds: []
 Parameters:
   Region:
     Type: String
@@ -53,13 +70,16 @@ Parameters:
   ContainerPort:
     Type: Number
     Default: 8080
-    
 Resources:
   CodePipeLine:
     Type: 'AWS::CodePipeline::Pipeline'
     Properties:
       ArtifactStore:
-        Location: !Join ['-', [!Ref Stage, !Ref 'AWS::AccountId', 's3bucket']]
+        Location: !Join 
+          - '-'
+          - - !Ref Stage
+            - !Ref 'AWS::AccountId'
+            - s3bucket
         Type: S3
       Name: CoreAPICodePipeline
       RestartExecutionOnUpdate: false
@@ -73,18 +93,31 @@ Resources:
                 Provider: GitHub
                 Version: 1
               Configuration:
-                Repo: repo
-                Branch: branch
-                Owner: owner
-                OAuthToken: auth
-              Region: !Ref Region
+                Repo: 'https://github.com/amith23/samples.git'
+                Branch: main
+                Owner: amith23
+                OAuthToken: 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
               RunOrder: 1
               OutputArtifacts:
                 - Name: source-output-artifacts
-      RoleArn:
-        'Fn::GetAtt':
-          - CodePipeLineExecutionRole
-          - Arn
+        - Name: Build
+          Actions:
+            - Name: Build
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              OutputArtifacts:
+                - Name: build-output-artifacts
+              InputArtifacts:
+                - Name: source-output-artifacts
+              Configuration:
+                ProjectName: !Ref BuildProject
+              RunOrder: 1
+      RoleArn: !GetAtt 
+        - CodePipeLineExecutionRole
+        - Arn
     Metadata:
       'AWS::CloudFormation::Designer':
         id: 3049c138-7d60-4d83-8651-ae3b7fd4796e
@@ -93,7 +126,11 @@ Resources:
   CodePipelineArtifactsS3Bucket:
     Type: 'AWS::S3::Bucket'
     Properties:
-      BucketName: !Join ['-', [!Ref Stage, !Ref 'AWS::AccountId', 's3bucket']]
+      BucketName: !Join 
+        - '-'
+        - - !Ref Stage
+          - !Ref 'AWS::AccountId'
+          - s3bucket
     Metadata:
       'AWS::CloudFormation::Designer':
         id: a4e5ab1b-892b-40b2-ab9d-e85937963910
@@ -111,3 +148,72 @@ Resources:
     Metadata:
       'AWS::CloudFormation::Designer':
         id: d4a38169-615a-4217-8aac-f5545bcb6446
+  BuildProject:
+    Type: 'AWS::CodeBuild::Project'
+    Properties:
+      ServiceRole: !GetAtt 
+        - CodeBuildRole
+        - Arn
+      Artifacts:
+        Type: NO_ARTIFACTS
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: 'aws/codebuild/standard:1.0'
+        PrivilegedMode: true
+        EnvironmentVariables:
+          - Name: varName1
+            Value: varValue1
+          - Name: varName2
+            Value: varValue2
+            Type: PLAINTEXT
+      Source:
+        Type: GITHUB
+        Location: 'https://github.com/amith23/samples.git'
+        BuildSpec: common-api/buildspec.yml
+      TimeoutInMinutes: 10
+      Cache:
+        Type: S3
+        Location: mybucket/prefix
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: f262e89d-d4f0-429a-ba20-4e78d7a37915
+  CodeBuildRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action:
+              - 'sts:AssumeRole'
+            Effect: Allow
+            Principal:
+              Service:
+                - codebuild.amazonaws.com
+        Version: 2012-10-17
+      Path: /
+      Policies:
+        - PolicyName: CodeBuildAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Action:
+                  - 'logs:CreateLogGroup'
+                  - 'logs:PutLogEvents'
+                  - 'logs:CreateLogStream'
+                  - 'ecr:*'
+                  - 's3:GetBucketAcl'
+                  - 's3:PutObject'
+                  - 's3:GetObject'
+                  - 's3:GetBucketLocation'
+                  - 's3:GetObjectVersion'
+                  - 'codebuild:CreateReportGroup'
+                  - 'codebuild:CreateReport'
+                  - 'codebuild:UpdateReport'
+                  - 'codebuild:BatchPutCodeCoverages'
+                  - 'codebuild:BatchPutTestCases'
+                  - 'ssm:GetParameters'
+                Effect: Allow
+                Resource: '*'
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 13c381d4-e16f-4299-b2a6-6411e2f58b32
