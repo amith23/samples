@@ -96,7 +96,7 @@ Resources:
                 Repo: 'https://github.com/gecko19/aws_na_backend.git'
                 Branch: main
                 Owner: gecko19
-                OAuthToken: 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
+                OAuthToken: ghp_ouyMWUVFHepodJR5jMp4mfjhgjghjghjhggS18Wy2239DgxE
               RunOrder: 1
               OutputArtifacts:
                 - Name: source-output-artifacts
