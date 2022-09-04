@@ -1,0 +1,29 @@
+version: 0.2
+env:
+  variables:
+    NODE_ENV: production
+    ENV REACT_APP_API_HOST: http://qwikfoneloadbalancer-316216489.eu-west-2.elb.amazonaws.com/
+    ENV REACT_APP_WS: ws://qwikfoneloadbalancer-316216489.eu-west-2.elb.amazonaws.com/graphql
+    ENV REACT_APP_API_PATH: /graphql
+    ENV REACT_APP_REST_API_PATH: /api/v1
+    ENV REACT_APP_JWT_TOKEN_NAME: app-jwt
+phases:
+  install:
+    runtime-versions:
+      nodejs: 14.x
+  pre_build:
+    commands:
+      - aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin 794379258695.dkr.ecr.eu-west-2.amazonaws.com
+  build:
+    commands:
+      - docker build -t qwikfonefrontend .
+      - docker tag qwikfonefrontend:latest 794379258695.dkr.ecr.eu-west-2.amazonaws.com/qwikfonefrontend:latest
+      - docker push 794379258695.dkr.ecr.eu-west-2.amazonaws.com/qwikfonefrontend:latest
+      
+  post_build:
+    commands:
+      - printf '[{"name":"container_name","imageUri":"image_URI"}]' > imagedefinitions.json
+      - echo "Application Built successfully"
+      
+artifacts:
+    files: imagedefinitions.json
