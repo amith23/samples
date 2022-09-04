@@ -1,0 +1,100 @@
+---
+ipcMode:
+executionRoleArn: arn:aws:iam::794379258695:role/qwikfonefrontend-devExecutionRole
+containerDefinitions:
+- dnsSearchDomains: []
+  environmentFiles: []
+  logConfiguration:
+    logDriver: awslogs
+    secretOptions: []
+    options:
+      awslogs-group: "/ecs/qwikfonefrontend-devTaskDefinition"
+      awslogs-region: eu-west-2
+      awslogs-stream-prefix: ecs
+  entryPoint: []
+  portMappings:
+  - hostPort: 80
+    protocol: tcp
+    containerPort: 80
+  command: []
+  linuxParameters:
+    initProcessEnabled: true
+  cpu: 0
+  environment: []
+  resourceRequirements:
+  ulimits: []
+  dnsServers: []
+  mountPoints: []
+  workingDirectory:
+  secrets: []
+  dockerSecurityOptions: []
+  memory:
+  memoryReservation:
+  volumesFrom: []
+  stopTimeout:
+  image: 794379258695.dkr.ecr.eu-west-2.amazonaws.com/qwikfonefrontend:latest
+  startTimeout:
+  firelensConfiguration:
+  dependsOn:
+  disableNetworking:
+  interactive:
+  healthCheck:
+  essential: true
+  links: []
+  hostname:
+  extraHosts: []
+  pseudoTerminal:
+  user:
+  readonlyRootFilesystem:
+  dockerLabels: {}
+  systemControls: []
+  privileged:
+  name: frontend
+placementConstraints: []
+memory: '512'
+taskRoleArn: arn:aws:iam::794379258695:role/qwikfonefrontend-devTaskRole
+compatibilities:
+- EC2
+- FARGATE
+taskDefinitionArn: arn:aws:ecs:eu-west-2:794379258695:task-definition/qwikfonefrontend-devTaskDefinition:1
+family: qwikfonefrontend-devTaskDefinition
+requiresAttributes:
+- targetId:
+  targetType:
+  value:
+  name: com.amazonaws.ecs.capability.logging-driver.awslogs
+- targetId:
+  targetType:
+  value:
+  name: ecs.capability.execution-role-awslogs
+- targetId:
+  targetType:
+  value:
+  name: com.amazonaws.ecs.capability.docker-remote-api.1.19
+- targetId:
+  targetType:
+  value:
+  name: com.amazonaws.ecs.capability.docker-remote-api.1.17
+- targetId:
+  targetType:
+  value:
+  name: com.amazonaws.ecs.capability.task-iam-role
+- targetId:
+  targetType:
+  value:
+  name: com.amazonaws.ecs.capability.docker-remote-api.1.18
+- targetId:
+  targetType:
+  value:
+  name: ecs.capability.task-eni
+pidMode:
+requiresCompatibilities:
+- FARGATE
+networkMode: awsvpc
+runtimePlatform:
+cpu: '256'
+revision: 1
+status: ACTIVE
+inferenceAccelerators:
+proxyConfiguration:
+volumes: []
